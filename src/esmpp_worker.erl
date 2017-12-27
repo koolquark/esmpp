@@ -404,6 +404,25 @@ handle_info({tcp, _Socket, <<_Len:32, ?ENQUIRE_LINK_RESP:32, ?ESME_ROK:32,
   {noreply, State};
 
 %% ----------------------------------------------------------------------------
+%% @private Handle an incomming enquire_link when in bound state
+%% ----------------------------------------------------------------------------
+handle_info({tcp, _Socket, <<_Len:32, ?ENQUIRE_LINK:32, _Null:32,
+                             Seq:32, _Data/binary>>}, #state{connected=true, socket=Socket} = State) ->
+  {pdu,    Packet} = esmpp_pdu:enquire_link_resp(Seq),
+  send(Socket, Packet),
+  {noreply, State};
+
+%% ----------------------------------------------------------------------------
+%% @private Handle an incomming enquire_link when in Unbound state
+%% ----------------------------------------------------------------------------
+handle_info({tcp, _Socket, <<_Len:32, ?ENQUIRE_LINK:32, _Null:32,
+                             Seq:32, _Data/binary>>}, #state{connected=false} = State) ->
+   io:format(standard_error, "[~p] Received EQUIRE_LINK(UNBOUND STATE) Seq : ~p", [
+    ?MODULE, Seq
+  ]),
+  {noreply, State};
+
+%% ----------------------------------------------------------------------------
 %% @private Connection closed from unbind
 %% ----------------------------------------------------------------------------
 handle_info({tcp_closed, _Socket}, #state{connected=false, tref=TRef} = State) ->
