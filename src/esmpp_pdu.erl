@@ -7,6 +7,7 @@
 -export([
   bind/2,
   enquire_link/1,
+  enquire_link_resp/1,
   submit_sm/2,
   deliver_sm_resp/1,
   unbind/1
@@ -22,6 +23,7 @@
 -include("constants.hrl").
 -include("types.hrl").
 -include("commands.hrl").
+-include("command_statuses.hrl").
 
 %% @doc Encode a bind PDU from a sequence number and a bind_pdu record
 -spec bind(integer(), bind_pdu()) -> {pdu, binary()}.
@@ -50,6 +52,17 @@ enquire_link(SeqNumInt) ->
   Status     = pad4(binary:encode_unsigned(?NULL)),
   SeqNum     = pad4(binary:encode_unsigned(SeqNumInt)),
   Command    = pad4(binary:encode_unsigned(?ENQUIRE_LINK)),
+  TmpPDU     = <<Command/binary, Status/binary, SeqNum/binary>>,
+  Length     = pad4(binary:encode_unsigned(size(TmpPDU) + 4)),
+  PDU        = <<Length/binary, TmpPDU/binary>>,
+  {pdu, PDU}.
+
+%% @doc Encode an enquire_link_resp PDU from a sequence number
+-spec enquire_link_resp(integer()) -> {pdu, binary()}.
+enquire_link_resp(SeqNumInt) ->
+  Status     = pad4(binary:encode_unsigned(?ESME_ROK)),
+  SeqNum     = pad4(binary:encode_unsigned(SeqNumInt)),
+  Command    = pad4(binary:encode_unsigned(?ENQUIRE_LINK_RESP)),
   TmpPDU     = <<Command/binary, Status/binary, SeqNum/binary>>,
   Length     = pad4(binary:encode_unsigned(size(TmpPDU) + 4)),
   PDU        = <<Length/binary, TmpPDU/binary>>,
